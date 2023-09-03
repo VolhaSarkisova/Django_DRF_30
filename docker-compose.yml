@@ -1,0 +1,38 @@
+version: "3"
+
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER_POS}
+      POSTGRES_PASSWORD: ${DB_PASSWORD_POS}
+      POSTGRES_DB: ${DB_NAME_POS}
+    ports:
+      - 5432:5432
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_USER: ${DB_USER_POS}
+      POSTGRES_PASSWORD: ${DB_PASSWORD_POS}
+      POSTGRES_DB: ${DB_NAME_POS}
+    ports:
+      - 8000:8000
+
+
+  # Сервис Nginx в качестве реверс-прокси
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"  # Проксируем порт 80 контейнера на порт 80 хоста
+    volumes:
+      - ./path/to/nginx/conf:/etc/nginx/conf.d  # Путь к каталогу с конфигурацией Nginx
+      - /path/to/static/files:/static  # Путь к статическим файлам Django
+    depends_on:
+      - web
